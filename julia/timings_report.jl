@@ -49,7 +49,7 @@ function main()
     const script_name = basename(@__FILE__)
     const doc = """$script_name
 
-Postprocess litho.transcript and pxdef.transcript files - get timers statistics.
+Postprocess transcript files - get timers statistics.
 
 Usage:
   $script_name -h | --help

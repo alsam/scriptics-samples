@@ -17,4 +17,4 @@ p = df."Power(mAh)"
 println("power: $p")
 m = Statistics.mean(p)
 d = Statistics.stdm(p, m)
-@printf("power: %.2f +/- %.2f\n", m, d)
+@printf("power: %.2f ± %.2f\n", m, d)

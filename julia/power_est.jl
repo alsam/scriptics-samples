@@ -1,5 +1,7 @@
 #!/bin/env julia
 
+# __precompile__()
+
 using CSV
 using Statistics
 using DataFrames
@@ -12,9 +14,14 @@ end
 
 input = ARGS[1]
 
-df = CSV.read(input, DataFrame)
-p = df."Power(mAh)"
-println("power: $p")
-m = Statistics.mean(p)
-d = Statistics.stdm(p, m)
-@printf("power: %.2f ± %.2f\n", m, d)
+function process(input)
+    df = CSV.read(input, DataFrame)
+    p = df."Power(mAh)"
+    println("power: $p")
+    m = Statistics.mean(p)
+    d = Statistics.stdm(p, m)
+    @printf("power: %.2f ± %.2f\n", m, d)
+end
+
+@time process(input)
+@time process(input)

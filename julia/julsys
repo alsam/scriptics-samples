@@ -1,0 +1,2 @@
+#!/bin/sh
+julia --sysimage sys_mycsv.so "$@"

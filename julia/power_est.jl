@@ -7,12 +7,12 @@ using Statistics
 using DataFrames
 using Printf
 
-if length(ARGS) < 1
+if length(ARGS) < 2
     println("give me input file name")
     exit(0)
 end
 
-input = ARGS[1]
+input = ARGS
 
 function process(input)
     df = CSV.read(input, DataFrame)
@@ -23,5 +23,5 @@ function process(input)
     @printf("power: %.2f ± %.2f\n", m, d)
 end
 
-@time process(input)
-@time process(input)
+@time process(input[1])
+@time process(input[2])

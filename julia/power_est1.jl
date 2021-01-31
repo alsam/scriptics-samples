@@ -6,12 +6,12 @@
 import GP
 #using GP
 
-if length(ARGS) < 1
-    println("give me input file name")
+if length(ARGS) < 2
+    println("give me input file names")
     exit(0)
 end
 
-input = ARGS[1]
+input = ARGS
 
-@time GP.process(input)
-@time GP.process(input)
+@time GP.process(input[1])
+@time GP.process(input[2])

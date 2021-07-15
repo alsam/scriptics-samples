@@ -40,8 +40,8 @@ mutable struct TimingsSummary
         new(m, 0, 0, s, "CPU", 0, 0, 0, 0)
 end
 
-const flt_regexp = r"\-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?"
-const maybe_space_regexp = r"\s*"
+const flt_regexp = "\\-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?"
+const sp_rexp = "\\s*"
 
 function main()
     if length(ARGS) < 1
@@ -59,16 +59,13 @@ function main()
                 #@printf("solver: %s matrix: %s\n", m[2], m[3])
                 timing_summary = TimingsSummary(m[2], m[3])
             end
-            m = match(r"Error:\s*(\-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)", line)
-            #r = Regex("Error:$maybe_space_regexp($flt_regexp)")
-            #println("r = $r")
-            #m = match(r"Error:$maybe_space_regexp($flt_regexp)", line)
-            #m = match(r, line)
+            m = match(Regex("Error:$sp_rexp($flt_regexp)"), line)
             if m != nothing
                 timing_summary.error = parse(Float64, m[1])
                 @printf("error: %g\n", timing_summary.error)
             end
             #m = match(r"\[\s*setup:\s*(-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)", line)
+            ##m = match(Regex("\\[($sp_rexp)setup:$sp_rexp($flt_regexp)"), line)
             println("entry: $timing_summary")
         end
     end

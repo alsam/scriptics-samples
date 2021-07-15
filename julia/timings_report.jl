@@ -22,6 +22,7 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 using DocOpt
+using Printf
 
 macro p_str(s) s end
 const rexp_dir = r"\s*([\w]+)/"
@@ -32,7 +33,7 @@ const rexp_abcdef_prefix = p"^ABCDEF:"
 const rexp_abc    = Regex("$rexp_abc_prefix$transcript_rexp_suf")
 const rexp_abcdef = Regex("$rexp_abcdef_prefix$transcript_rexp_suf")
 
-type TestSummary
+mutable struct TestSummary
     name::AbstractString
     exec_time::Float64
     grad_time::Float64
@@ -46,8 +47,8 @@ end
 
 function main()
 
-    const script_name = basename(@__FILE__)
-    const doc = """$script_name
+    script_name = basename(@__FILE__)
+    doc = """$script_name
 
 Postprocess transcript files - get timers statistics.
 

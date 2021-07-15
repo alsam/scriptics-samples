@@ -24,6 +24,9 @@
 #using DocOpt
 using Printf
 
+macro p_str(s) s end
+const flt_regexp = p"\-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?"
+
 mutable struct TimingsSummary
     matrix_name::AbstractString
     rows::Int
@@ -40,8 +43,6 @@ mutable struct TimingsSummary
         new(m, 0, 0, s, "CPU", 0, 0, 0, 0)
 end
 
-const flt_regexp = "\\-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?"
-const sp_rexp = "\\s*"
 
 function main()
     if length(ARGS) < 1
@@ -58,14 +59,27 @@ function main()
             if m != nothing
                 #@printf("solver: %s matrix: %s\n", m[2], m[3])
                 timing_summary = TimingsSummary(m[2], m[3])
+                continue
             end
-            m = match(Regex("Error:$sp_rexp($flt_regexp)"), line)
+            m = match(Regex("Error:\\s*($flt_regexp)"), line)
             if m != nothing
                 timing_summary.error = parse(Float64, m[1])
                 @printf("error: %g\n", timing_summary.error)
+                continue
             end
-            #m = match(r"\[\s*setup:\s*(-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)", line)
-            ##m = match(Regex("\\[($sp_rexp)setup:$sp_rexp($flt_regexp)"), line)
+            m = match(Regex("\\[\\s*setup:\\s*($flt_regexp)\\s*s\\](.+)"), line)
+            if m != nothing
+                timing_summary.setup_time = parse(Float64, m[1])
+                @printf("setup_time: %g\n", timing_summary.setup_time)
+                continue
+            end
+            m = match(Regex("\\[\\s*solve:\\s*($flt_regexp)\\s*s\\](.+)"), line)
+            if m != nothing
+                timing_summary.solve_time = parse(Float64, m[1])
+                @printf("solve_time: %g\n", timing_summary.solve_time)
+                continue
+            end
+
             println("entry: $timing_summary")
         end
     end

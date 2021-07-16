@@ -30,7 +30,6 @@ const flt_regexp = p"\-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?"
 mutable struct TimingsSummary
     matrix_name::AbstractString
     rows::Int
-    cols::Int
     solver_type::AbstractString
     processor::AbstractString
     setup_time::Float64
@@ -40,9 +39,10 @@ mutable struct TimingsSummary
 
     # a constructor
     TimingsSummary(s::AbstractString = "", m::AbstractString = "") =
-        new(m, 0, 0, s, "CPU", 0, 0, 0, 0)
+        new(m, 0, s, "CPU", 0, 0, 0, 0)
 end
 
+@enum State none test_name rows iterations error setup_time solve_time
 
 function main()
     if length(ARGS) < 1
@@ -51,6 +51,8 @@ function main()
     end
 
     ifname = ARGS[1]
+    state = none
+    summary = TimingsSummary[]
     open(ifname, "r") do f
         timing_summary =TimingsSummary()
         for line in eachline(f)
@@ -59,29 +61,55 @@ function main()
             if m != nothing
                 #@printf("solver: %s matrix: %s\n", m[2], m[3])
                 timing_summary = TimingsSummary(m[2], m[3])
+                state = test_name
+                continue
+            end
+            m = match(r"rows:\s*(\d+)", line)
+            if m != nothing
+                timing_summary.rows = parse(Int, m[1])
+                #@printf("error: %d\n", timing_summary.rows)
+                state = rows
+                continue
+            end
+            m = match(r"Iterations:\s*(\d+)", line)
+            if m != nothing
+                timing_summary.iterations = parse(Int, m[1])
+                #@printf("error: %d\n", timing_summary.iterations)
+                state = iterations
                 continue
             end
             m = match(Regex("Error:\\s*($flt_regexp)"), line)
             if m != nothing
                 timing_summary.error = parse(Float64, m[1])
-                @printf("error: %g\n", timing_summary.error)
+                #@printf("error: %g\n", timing_summary.error)
+                state = error
                 continue
             end
             m = match(Regex("\\[\\s*setup:\\s*($flt_regexp)\\s*s\\](.+)"), line)
             if m != nothing
                 timing_summary.setup_time = parse(Float64, m[1])
-                @printf("setup_time: %g\n", timing_summary.setup_time)
+                #@printf("setup_time: %g\n", timing_summary.setup_time)
+                state = setup_time
                 continue
             end
             m = match(Regex("\\[\\s*solve:\\s*($flt_regexp)\\s*s\\](.+)"), line)
             if m != nothing
                 timing_summary.solve_time = parse(Float64, m[1])
-                @printf("solve_time: %g\n", timing_summary.solve_time)
+                #@printf("solve_time: %g\n", timing_summary.solve_time)
+                state = solve_time
                 continue
             end
 
-            println("entry: $timing_summary")
+            if state == solve_time # finished parsing the case
+                #println("entry: $timing_summary")
+                push!(summary, timing_summary)
+                state = none
+            end
         end
+    end
+
+    for s in summary
+        println("s: $s")
     end
 end
 

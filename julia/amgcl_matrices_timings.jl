@@ -110,7 +110,7 @@ function main()
 
     indices = Dict{AbstractString, Vector{UInt}}()
     for (index, entry) in enumerate(summary)
-        println("$index: $entry")
+        #println("$index: $entry")
         local test_name = entry.matrix_name
         if !haskey(indices, test_name)
             # a new one
@@ -121,12 +121,27 @@ function main()
     end
 
     for (k, v) in indices
-        println("$k : $v")
+        #println("$k : $v")
+        local (cpu_result_idx, gpu_result_idx) = (0, 0)
+        for index in v
+            sum = summary[index]
+            if sum.solver_type == "_cuda"
+                gpu_result_idx = index
+            else
+                cpu_result_idx = index
+            end
+        end
+        if gpu_result_idx > 0 && cpu_result_idx > 0
+            local (cpu_info, gpu_info) = (summary[cpu_result_idx], summary[gpu_result_idx])
+            @printf("%s: CPU solve_time: %g GPU solve_time: %g speedup: %g\n",
+                    k, cpu_info.solve_time, gpu_info.solve_time,
+                    cpu_info.solve_time / gpu_info.solve_time)
+        end
     end
 
 end
 
-main()
-
+@time main()
+@time main()
 
 

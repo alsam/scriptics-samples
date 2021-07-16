@@ -108,9 +108,22 @@ function main()
         end
     end
 
-    for s in summary
-        println("s: $s")
+    indices = Dict{AbstractString, Vector{UInt}}()
+    for (index, entry) in enumerate(summary)
+        println("$index: $entry")
+        local test_name = entry.matrix_name
+        if !haskey(indices, test_name)
+            # a new one
+            indices[test_name] = [index]
+        else
+            push!(indices[test_name], index)
+        end
     end
+
+    for (k, v) in indices
+        println("$k : $v")
+    end
+
 end
 
 main()

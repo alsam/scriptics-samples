@@ -108,8 +108,12 @@ function main()
         end
     end
 
+    sorted = sort!(summary, lt = (a,b) -> a.rows < b.rows)
+
+    #println("sorted: $sorted")
+
     indices = Dict{AbstractString, Vector{UInt}}()
-    for (index, entry) in enumerate(summary)
+    for (index, entry) in enumerate(sorted)
         #println("$index: $entry")
         local test_name = entry.matrix_name
         if !haskey(indices, test_name)
@@ -142,6 +146,5 @@ function main()
 end
 
 @time main()
-@time main()
-
+#@time main()
 

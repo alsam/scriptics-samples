@@ -44,6 +44,16 @@ end
 
 @enum State none test_name rows iterations error setup_time solve_time
 
+function parse_case(case_data::AbstractString)
+    println("case_data: ", case_data)
+    d = split(case_data)
+    solver_params = Dict([Tuple(x for x in split(z, "=")) for z in d if occursin("=", z)])
+    print("solver params: ", solver_params)
+    matrix_name = basename(d[1])
+    mname_split = split(matrix_name, "_")
+    matrix_size = parse(Int, first(split(last(mname_split), ".")))
+end
+
 function main()
     if length(ARGS) < 1
         println("gimme input")
@@ -57,9 +67,10 @@ function main()
         timing_summary =TimingsSummary()
         for line in eachline(f)
             ##println(line)
-            m = match(r"(\./)?solver(.*)\s+\-A\s+(.+)", line)
+            m = match(r"(\./)?(solver.*)\s+\-A\s+(.+)", line)
             if m != nothing
-                #@printf("solver: %s matrix: %s\n", m[2], m[3])
+                parse_case(m[3])
+                @printf("solver: %s matrix: %s\n", m[2], m[3])
                 timing_summary = TimingsSummary(m[2], m[3])
                 state = test_name
                 continue
@@ -137,9 +148,9 @@ function main()
         end
         if gpu_result_idx > 0 && cpu_result_idx > 0
             local (cpu_info, gpu_info) = (summary[cpu_result_idx], summary[gpu_result_idx])
-            @printf("%s: CPU solve_time: %g GPU solve_time: %g speedup: %g\n",
+            @printf("%s: CPU solve_time: %g GPU solve_time: %g speedup: %g CPU error: %g GPU error: %g\n",
                     k, cpu_info.solve_time, gpu_info.solve_time,
-                    cpu_info.solve_time / gpu_info.solve_time)
+                    cpu_info.solve_time / gpu_info.solve_time, cpu_info.error, gpu_info.error)
         end
     end
 

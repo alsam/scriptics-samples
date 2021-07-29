@@ -1,0 +1,25 @@
+https://sparse.tamu.edu
+
+Matrices from the paper (Naumov et.al. AmgX: A Library for GPU Accelerated Algebraic Multigrid and Preconditioned
+Iterative Methods):
+2cubes_sphere: https://sparse.tamu.edu/Um/2cubes_sphere
+thermal2: https://sparse.tamu.edu/Schmid/thermal2
+atmosmodd: https://sparse.tamu.edu/Bourchtein/atmosmodd
+cage14: https://sparse.tamu.edu/vanHeukelum/cage14
+
+Additional matrices for testing:
+Goodwin_095: https://sparse.tamu.edu/Goodwin/Goodwin_095
+windtunnel_evap3d: https://sparse.tamu.edu/Grueninger/windtunnel_evap3d
+darcy003: https://sparse.tamu.edu/GHS_indef/darcy003
+mario002: https://sparse.tamu.edu/GHS_indef/mario002
+windtunnel_evap2d: https://sparse.tamu.edu/Grueninger/windtunnel_evap2d
+windtunnel_evap3d: https://sparse.tamu.edu/Grueninger/windtunnel_evap3d
+HV15R: https://sparse.tamu.edu/Fluorem/HV15R
+DK01R: https://sparse.tamu.edu/Fluorem/DK01R
+GT01R: https://sparse.tamu.edu/Fluorem/GT01R
+RM07R: https://sparse.tamu.edu/Fluorem/RM07R
+PR02R: https://sparse.tamu.edu/Fluorem/PR02R
+atmosmodj: https://sparse.tamu.edu/Bourchtein/atmosmodj
+Ill_Stokes: https://sparse.tamu.edu/Szczerba/Ill_Stokes
+Bump_2911: https://sparse.tamu.edu/Janna/Bump_2911
+

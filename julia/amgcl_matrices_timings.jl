@@ -23,6 +23,7 @@
 
 #using DocOpt
 using Printf
+using DataFrames
 
 macro p_str(s) s end
 const flt_regexp = p"\-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?"
@@ -44,14 +45,20 @@ end
 
 @enum State none test_name rows iterations error setup_time solve_time
 
-function parse_case(case_data::AbstractString)
-    println("case_data: ", case_data)
+function parse_case(case_params::Vector{Tuple{String, String}}, case_data::AbstractString)
+    #println("case_data: ", case_data)
     d = split(case_data)
-    solver_params = Dict([Tuple(x for x in split(z, "=")) for z in d if occursin("=", z)])
-    print("solver params: ", solver_params)
     matrix_name = basename(d[1])
-    mname_split = split(matrix_name, "_")
-    matrix_size = parse(Int, first(split(last(mname_split), ".")))
+    matrix_name_elems = split(first(split(matrix_name, ".")),"_")
+    matrix_size = last(matrix_name_elems)
+    polynomial_degree = matrix_name_elems[3]
+    push!(case_params, ("matrix_name", matrix_name))
+    push!(case_params, ("matrix_size", matrix_size))
+    push!(case_params, ("polynomial_degree", polynomial_degree))
+    params = [Tuple(String(x) for x in split(z, "=")) for z in d if occursin("=", z)]
+    for z in params
+        push!(case_params, z)
+    end
 end
 
 function main()
@@ -63,14 +70,18 @@ function main()
     ifname = ARGS[1]
     state = none
     summary = TimingsSummary[]
+    dfs = DataFrame()
     open(ifname, "r") do f
-        timing_summary =TimingsSummary()
+        timing_summary = TimingsSummary()
+        case_params = Vector{Tuple{String, String}}()
         for line in eachline(f)
             ##println(line)
             m = match(r"(\./)?(solver.*)\s+\-A\s+(.+)", line)
             if m != nothing
-                parse_case(m[3])
-                @printf("solver: %s matrix: %s\n", m[2], m[3])
+                parse_case(case_params, m[3])
+                insert!(case_params, 3, ("solver_program", m[2]))
+                #@printf("solver: %s matrix: %s\n", m[2], m[3])
+                #println("case_params: ", case_params)
                 timing_summary = TimingsSummary(m[2], m[3])
                 state = test_name
                 continue
@@ -78,6 +89,7 @@ function main()
             m = match(r"rows:\s*(\d+)", line)
             if m != nothing
                 timing_summary.rows = parse(Int, m[1])
+                push!(case_params, ("rows", m[1]))
                 #@printf("error: %d\n", timing_summary.rows)
                 state = rows
                 continue
@@ -85,6 +97,7 @@ function main()
             m = match(r"Iterations:\s*(\d+)", line)
             if m != nothing
                 timing_summary.iterations = parse(Int, m[1])
+                push!(case_params, ("iterations", m[1]))
                 #@printf("error: %d\n", timing_summary.iterations)
                 state = iterations
                 continue
@@ -92,6 +105,7 @@ function main()
             m = match(Regex("Error:\\s*($flt_regexp)"), line)
             if m != nothing
                 timing_summary.error = parse(Float64, m[1])
+                push!(case_params, ("error", m[1]))
                 #@printf("error: %g\n", timing_summary.error)
                 state = error
                 continue
@@ -114,10 +128,20 @@ function main()
             if state == solve_time # finished parsing the case
                 #println("entry: $timing_summary")
                 push!(summary, timing_summary)
+                #println("case_params: ", case_params)
+                df = DataFrame(Dict(case_params))
+                #println(df)
+                if ncol(df) >= 12
+                    dfs = vcat(dfs, df)
+                end
+                case_params = Vector{Tuple{String, String}}()
                 state = none
             end
         end
     end
+
+    #println(describe(dfs))
+    println(dfs)
 
     sorted = sort!(summary, lt = (a,b) -> a.rows < b.rows)
 
@@ -140,7 +164,7 @@ function main()
         local (cpu_result_idx, gpu_result_idx) = (0, 0)
         for index in v
             sum = summary[index]
-            if sum.solver_type == "_cuda"
+            if sum.solver_type == "solver_cuda"
                 gpu_result_idx = index
             else
                 cpu_result_idx = index

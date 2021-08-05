@@ -45,13 +45,16 @@ end
 
 @enum State none test_name rows iterations error setup_time solve_time
 
-function parse_case(case_params::Vector{Tuple{String, String}}, case_data::AbstractString)
+function parse_case(case_params::Vector{Tuple{String, String}}, precision_data::AbstractString, case_data::AbstractString)
     #println("case_data: ", case_data)
+    #println("precision_data: ", precision_data)
+    precision = match(r"(float|double)", precision_data)
     d = split(case_data)
     matrix_name = basename(d[1])
     matrix_name_elems = split(first(split(matrix_name, ".")),"_")
     matrix_size = last(matrix_name_elems)
     polynomial_degree = matrix_name_elems[3]
+    push!(case_params, ("precision", precision[1]))
     push!(case_params, ("matrix_name", matrix_name))
     push!(case_params, ("matrix_size", matrix_size))
     push!(case_params, ("polynomial_degree", polynomial_degree))
@@ -76,9 +79,9 @@ function main()
         case_params = Vector{Tuple{String, String}}()
         for line in eachline(f)
             ##println(line)
-            m = match(r"(\./)?(solver.*)\s+\-A\s+(.+)", line)
+            m = match(r"(.+)(solver.*)\s+\-A\s+(.+)", line)
             if m != nothing
-                parse_case(case_params, m[3])
+                parse_case(case_params, m[1], m[3])
                 insert!(case_params, 3, ("solver_program", m[2]))
                 #@printf("solver: %s matrix: %s\n", m[2], m[3])
                 #println("case_params: ", case_params)
@@ -113,6 +116,7 @@ function main()
             m = match(Regex("\\[\\s*setup:\\s*($flt_regexp)\\s*s\\](.+)"), line)
             if m != nothing
                 timing_summary.setup_time = parse(Float64, m[1])
+                push!(case_params, ("setup_time", m[1]))
                 #@printf("setup_time: %g\n", timing_summary.setup_time)
                 state = setup_time
                 continue
@@ -120,6 +124,7 @@ function main()
             m = match(Regex("\\[\\s*solve:\\s*($flt_regexp)\\s*s\\](.+)"), line)
             if m != nothing
                 timing_summary.solve_time = parse(Float64, m[1])
+                push!(case_params, ("solve_time", m[1]))
                 #@printf("solve_time: %g\n", timing_summary.solve_time)
                 state = solve_time
                 continue
@@ -131,7 +136,7 @@ function main()
                 #println("case_params: ", case_params)
                 df = DataFrame(Dict(case_params))
                 #println(df)
-                if ncol(df) >= 12
+                if ncol(df) >= 15
                     dfs = vcat(dfs, df)
                 end
                 case_params = Vector{Tuple{String, String}}()
@@ -141,7 +146,29 @@ function main()
     end
 
     #println(describe(dfs))
-    println(dfs)
+    #println(dfs)
+
+    speedup_dict = Dict{AbstractString, Vector{DataFrameRow}}()
+
+    dfs_good = filter(row -> parse(Float64, row.error) < 1e-3 && parse(Int, row.iterations) < 100, dfs)
+    println(dfs_good)
+
+    for r in eachrow(dfs_good)
+        #println(r)
+        local m_name = r.matrix_name
+        #println(matrix_name)
+        if !haskey(speedup_dict, m_name)
+            speedup_dict[m_name] = [r]
+        else
+            push!(speedup_dict[r.matrix_name], r)
+        end
+    end
+
+    for (k, v) in speedup_dict
+        println(k, " -> ", length(v))
+        sort!(v, lt = (x,y) -> x.solve_time < y.solve_time)
+        println(v[1], v[2], "\n")
+    end
 
     sorted = sort!(summary, lt = (a,b) -> a.rows < b.rows)
 
@@ -172,9 +199,9 @@ function main()
         end
         if gpu_result_idx > 0 && cpu_result_idx > 0
             local (cpu_info, gpu_info) = (summary[cpu_result_idx], summary[gpu_result_idx])
-            @printf("%s: CPU solve_time: %g GPU solve_time: %g speedup: %g CPU error: %g GPU error: %g\n",
-                    k, cpu_info.solve_time, gpu_info.solve_time,
-                    cpu_info.solve_time / gpu_info.solve_time, cpu_info.error, gpu_info.error)
+            #@printf("%s: CPU solve_time: %g GPU solve_time: %g speedup: %g CPU error: %g GPU error: %g\n",
+            #        k, cpu_info.solve_time, gpu_info.solve_time,
+            #        cpu_info.solve_time / gpu_info.solve_time, cpu_info.error, gpu_info.error)
         end
     end
 

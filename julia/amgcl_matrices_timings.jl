@@ -116,7 +116,8 @@ function main()
             m = match(Regex("\\[\\s*setup:\\s*($flt_regexp)\\s*s\\](.+)"), line)
             if m != nothing
                 timing_summary.setup_time = parse(Float64, m[1])
-                push!(case_params, ("setup_time", m[1]))
+                push!(case_params, ("c.setup_time", m[1]))
+                #insert!(case_params, 4, ("setup_time", m[1]))
                 #@printf("setup_time: %g\n", timing_summary.setup_time)
                 state = setup_time
                 continue
@@ -124,7 +125,8 @@ function main()
             m = match(Regex("\\[\\s*solve:\\s*($flt_regexp)\\s*s\\](.+)"), line)
             if m != nothing
                 timing_summary.solve_time = parse(Float64, m[1])
-                push!(case_params, ("solve_time", m[1]))
+                push!(case_params, ("c.solve_time", m[1]))
+                #insert!(case_params, 3, ("solve_time", m[1]))
                 #@printf("solve_time: %g\n", timing_summary.solve_time)
                 state = solve_time
                 continue
@@ -166,8 +168,11 @@ function main()
 
     for (k, v) in speedup_dict
         println(k, " -> ", length(v))
-        sort!(v, lt = (x,y) -> x.solve_time < y.solve_time)
-        println(v[1], v[2], "\n")
+        sort!(v, lt = (x,y) -> x."c.solve_time" < y."c.solve_time")
+        println(NamedTuple(v[1]))
+        println(NamedTuple(v[2]))
+        println(NamedTuple(v[3]))
+        println("===================================================================================================================================================================================\n\n")
     end
 
     sorted = sort!(summary, lt = (a,b) -> a.rows < b.rows)
